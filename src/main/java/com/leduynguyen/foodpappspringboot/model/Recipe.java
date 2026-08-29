@@ -53,6 +53,9 @@ public class Recipe {
     @Column(length = 20)
     private String seafood;
 
+    @Column(length = 20)
+    private String sweetness;
+
     @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
 
@@ -175,6 +178,14 @@ public class Recipe {
 
     public void setRatings(List<Rating> ratings) {
         this.ratings = ratings;
+    }
+
+    public String getSweetness() {
+        return sweetness;
+    }
+
+    public void setSweetness(String sweetness) {
+        this.sweetness = sweetness;
     }
 
     public Double getAverageRating() {
