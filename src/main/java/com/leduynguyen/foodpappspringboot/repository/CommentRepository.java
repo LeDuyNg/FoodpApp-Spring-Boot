@@ -1,0 +1,10 @@
+package com.leduynguyen.foodpappspringboot.repository;
+
+import com.leduynguyen.foodpappspringboot.model.Comment;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface CommentRepository extends JpaRepository<Comment, Long> {
+    List<Comment> findBuRecipeId(Long recipeId);
+}
