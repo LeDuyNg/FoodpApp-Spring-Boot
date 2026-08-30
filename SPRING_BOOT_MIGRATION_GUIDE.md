@@ -30,7 +30,7 @@ A companion MySQL setup script ships with this guide at
 10. [Security (full code)](#10-security-full-code)
 11. [Service Layer (guided)](#11-service-layer-guided)
 12. [Controllers (guided) & Route Table](#12-controllers-guided--route-table)
-13. [Thymeleaf Basics + Minimal Placeholder Templates](#13-thymeleaf-basics--minimal-placeholder-templates)
+13. [Thymeleaf Templates (already written for you)](#13-thymeleaf-templates-already-written-for-you)
 14. [Static Resources](#14-static-resources)
 15. [External API Integration (TheMealDB)](#15-external-api-integration-themealdb)
 16. [Testing](#16-testing)
@@ -1644,35 +1644,444 @@ public class RecipeController {
 }
 ```
 
-### 12.4 `HomeController.java`, `ProfileController.java`, `ExternalRecipeController.java`
+### 12.4 `HomeController.java` (guided stub)
 
-Follow the same pattern as `RecipeController` above:
-- One `@GetMapping`/`@PostMapping` per row remaining in the route table (§12.1)
-- Inject the relevant `@Service`, call it, put the result on `Model`, return a view name
-- For each, go read the corresponding original function in `routes.py` (line
-  numbers are in the route table's source references throughout this guide)
-  and translate it step by step, the same way the `RecipeController` TODOs
-  above walk through their originals
+Handles the landing/redirect and the home page's "recipe of the day". Build
+this at **M4**.
 
-Specific things to watch for as you write these:
-- **`HomeController.home()`** — `routes.py:316-329`. Calls
-  `recipeService.recipeOfTheDay()` (§11.2).
-- **`HomeController.randomFromApi()`** (or fold into
-  `ExternalRecipeController`) — `routes.py:331-338`. See §15.
-- **`ProfileController.deleteProfile()`** — must be `@PostMapping`, not
-  `@GetMapping` (see the route table callout above on why the original's
-  `GET`-based deletion is a pattern to *not* copy).
-- **`ExternalRecipeController.importFromApi()`** — `routes.py:340-399`. See §15
-  for the `MealDbClient` service this depends on.
+```java
+package com.yourname.foodapp.controller;
+
+import com.yourname.foodapp.model.Recipe;
+import com.yourname.foodapp.service.RecipeService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class HomeController {
+
+    private final RecipeService recipeService;
+
+    public HomeController(RecipeService recipeService) {
+        this.recipeService = recipeService;
+    }
+
+    // GET / — the original rendered the login page at "/" (routes.py). With
+    // Spring Security's form login (§10.3) owning /login, the cleanest thing
+    // for "/" is to send everyone to /home and let Security bounce anonymous
+    // users to /login itself. No service call needed.
+    @GetMapping("/")
+    public String index() {
+        return "redirect:/home";
+    }
+
+    // TODO: GET /home — port home() (routes.py:316-329).
+    // Steps:
+    //   1. Recipe pick = recipeService.recipeOfTheDay();   (§11.2)
+    //   2. model.addAttribute("recipeOfTheDay", pick);
+    //      — pick may be null (no recipes yet); the template guards with
+    //        th:if (§13), so you do NOT build a fake id=-1 Recipe like the
+    //        original did for Jinja2.
+    //   3. return "home";   // templates/home.html
+    @GetMapping("/home")
+    public String home(Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // OPTIONAL: GET /home/following — the original renders templates/
+    // following.html, but there is no follow model/feature behind it and it
+    // is NOT in requirements.md's functional requirements. Either delete this
+    // route, or return an empty-state page:
+    //   return "following";
+    @GetMapping("/home/following")
+    public String following(Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+}
+```
+
+### 12.5 `ProfileController.java` (guided stub)
+
+Profile view, edit, delete, and favorites list. Build this at **M9**.
+
+```java
+package com.yourname.foodapp.controller;
+
+import com.yourname.foodapp.dto.UpdateProfileForm;
+import com.yourname.foodapp.security.AppUserDetails;
+import com.yourname.foodapp.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/profile")
+public class ProfileController {
+
+    private final UserService userService;
+
+    public ProfileController(UserService userService) {
+        this.userService = userService;
+    }
+
+    // TODO: GET /profile — port the myprofile() view (routes.py).
+    // Put the current user on the model (username, email, and their recipes
+    // via user.getRecipes()) and return "profile".
+    // Gotcha: user.getRecipes() is a LAZY collection. If the template
+    // iterates it, either load it inside a @Transactional service method
+    // first, or add a fetch-join query — otherwise
+    // LazyInitializationException (§18).
+    @GetMapping
+    public String profile(@AuthenticationPrincipal AppUserDetails principal, Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: GET /profile/edit — render the update form pre-filled with the
+    // current username/email (leave the password field blank). Build an
+    // UpdateProfileForm, copy in the two fields,
+    // model.addAttribute("form", form), return "profile-edit".
+    @GetMapping("/edit")
+    public String editForm(@AuthenticationPrincipal AppUserDetails principal, Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: POST /profile — port update_profile() (routes.py:401-412).
+    // Steps:
+    //   1. @Valid the form; if result.hasErrors() return "profile-edit".
+    //   2. Duplicate check: if the new username/email is taken by SOMEONE
+    //      ELSE (compare against principal.getUser()'s current values),
+    //      result.rejectValue("username"/"email", "duplicate", "...") and
+    //      return "profile-edit". See the UserService.updateProfile
+    //      discussion in §11.1 (the "exclude the user's own value" rule).
+    //   3. userService.updateProfile(principal.getUser(), form);
+    //   4. You just changed the username/email that identifies the logged-in
+    //      principal, so the simplest correct move is to force a fresh login:
+    //         return "redirect:/logout";
+    //      (Re-authenticating in place is possible but not worth it here.)
+    @PostMapping
+    public String update(@Valid @ModelAttribute("form") UpdateProfileForm form,
+                         BindingResult result,
+                         @AuthenticationPrincipal AppUserDetails principal) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: POST /profile/delete — port delete_profile() (routes.py:431-445).
+    // MUST be @PostMapping from a confirm form — the original used GET (a
+    // plain link that deletes your account on click); do NOT copy that (§12.1
+    // route-table callout).
+    // Steps:
+    //   1. userService.deleteAccount(principal.getUser());   — cascade
+    //      deletes their recipes/comments/ratings (§11.1); no manual loop.
+    //   2. Invalidate the session so the now-deleted user isn't still
+    //      "logged in":  request.getSession().invalidate();
+    //   3. return "redirect:/login";
+    @PostMapping("/delete")
+    public String delete(@AuthenticationPrincipal AppUserDetails principal,
+                         HttpServletRequest request) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: GET /profile/favorites — port the myprofile/favorites view
+    // (routes.py). model.addAttribute("recipes",
+    // principal.getUser().getFavoriteRecipes()) and return "favorites".
+    // Same LAZY-collection gotcha as GET /profile above.
+    @GetMapping("/favorites")
+    public String favorites(@AuthenticationPrincipal AppUserDetails principal, Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+}
+```
+
+### 12.6 `ExternalRecipeController.java` (guided stub)
+
+Pull a recipe from TheMealDB and import it as the user's own. Depends on
+`MealDbClient` (§15). Build this at **M10**.
+
+Note: these paths sit under `/recipes` but this is a *separate* controller
+from `RecipeController` — that's fine, two controllers can share a URL
+prefix as long as no two methods map the same path+verb. Spring matches
+literal segments (`/recipes/random-from-api`) ahead of variable ones
+(`/recipes/{id}`), so there's no clash. Full paths are written on each
+method here (no class-level `@RequestMapping`) to keep that obvious.
+
+```java
+package com.yourname.foodapp.controller;
+
+import com.yourname.foodapp.dto.RecipeForm;
+import com.yourname.foodapp.model.Recipe;
+import com.yourname.foodapp.security.AppUserDetails;
+import com.yourname.foodapp.service.MealDbClient;
+import com.yourname.foodapp.service.RecipeService;
+import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@Controller
+public class ExternalRecipeController {
+
+    private final MealDbClient mealDbClient;
+    private final RecipeService recipeService;
+
+    public ExternalRecipeController(MealDbClient mealDbClient, RecipeService recipeService) {
+        this.mealDbClient = mealDbClient;
+        this.recipeService = recipeService;
+    }
+
+    // TODO: GET /recipes/random-from-api — port random_recipe()
+    // (routes.py:331-338).
+    //   1. Map<String,Object> meal = mealDbClient.fetchRandomMeal();   (§15.1)
+    //   2. Redirect to the review screen for that meal's id:
+    //         return "redirect:/recipes/import/" + meal.get("idMeal");
+    @GetMapping("/recipes/random-from-api")
+    public String random() {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: GET /recipes/import/{mealId} — the "review before saving" step;
+    // port the form-prefill half of add_API_recipe() (routes.py:340-399,
+    // specifically the `initial` dict it builds around routes.py:364-369).
+    //   1. Map<String,Object> meal = mealDbClient.fetchMealById(mealId);
+    //   2. Build a RecipeForm and set:
+    //        title        <- (String) meal.get("strMeal")
+    //        instructions <- (String) meal.get("strInstructions")
+    //        ingredients  <- mealDbClient.formatIngredients(meal)   (§15.1)
+    //        description  <- however the original composed it
+    //                        (e.g. strCategory + " / " + strArea)
+    //   3. model.addAttribute("form", form);
+    //      model.addAttribute("mealId", mealId);   // so the form's POST target knows the id
+    //   4. return "recipe-form";   // reuse the SAME template as GET /recipes/new
+    @GetMapping("/recipes/import/{mealId}")
+    public String importForm(@PathVariable String mealId, Model model) {
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    // TODO: POST /recipes/import/{mealId} — the save half of add_API_recipe().
+    // Once the user has reviewed the pre-filled form this is identical to
+    // RecipeController.create():
+    //   1. @Valid the form; if result.hasErrors() return "recipe-form".
+    //   2. Recipe saved = recipeService.create(form, principal.getUser());
+    //   3. return "redirect:/recipes/" + saved.getId();
+    // Simplification: you can DELETE this method and just point the review
+    // form's th:action at the existing POST /recipes endpoint — only keep a
+    // separate handler if you need import-specific behavior.
+    @PostMapping("/recipes/import/{mealId}")
+    public String importSave(@PathVariable String mealId,
+                             @Valid @ModelAttribute("form") RecipeForm form,
+                             BindingResult result,
+                             @AuthenticationPrincipal AppUserDetails principal) {
+        throw new UnsupportedOperationException("TODO");
+    }
+}
+```
+
+### 12.7 Cross-cutting rules for every controller
+
+Apply these to `RecipeController` (§12.3) and the three stubs above alike:
+
+- **Getting the current user.** `@AuthenticationPrincipal AppUserDetails
+  principal` is your `current_user` (§10.4). On protected routes SecurityConfig
+  guarantees it is non-null. On the one public route (`GET /recipes/{id}`,
+  per requirements.md use case 7) it can be `null` — guard every
+  `principal.getUser()` there.
+- **Post/Redirect/Get.** Every `@PostMapping` that changes data must end with
+  `return "redirect:/...";`, never a bare view name — otherwise a browser
+  refresh re-submits. The *only* exception is re-rendering a form after
+  `result.hasErrors()` (`return "recipe-form";`).
+- **Flash messages** (Flask's `flash()`). Add a `RedirectAttributes`
+  parameter, call `redirectAttributes.addFlashAttribute("message", "...")`
+  before returning the redirect, and read `${message}` in the target
+  template.
+- **Service exceptions.** The service layer throws `IllegalStateException`
+  for "not found" / "not the owner" / "duplicate" (§11). Per controller,
+  either catch it and
+  `redirectAttributes.addFlashAttribute("error", e.getMessage())` + redirect,
+  or let it bubble to a shared `@ControllerAdvice` handler. Catching locally
+  is the simpler start.
+- **View names.** The `String` you return maps to
+  `src/main/resources/templates/<name>.html`. The templates that ship with
+  this project (§13) are: `home`, `login`, `register`, `recipe-list`,
+  `my-recipes`, `recipe-view`, `recipe-form`, `profile`, `profile-edit`,
+  `favorites`, `following`, `error`.
+- **Lazy relationships in templates.** Any `FetchType.LAZY` field
+  (`recipe.getUser()`, `user.getRecipes()`, `user.getFavoriteRecipes()`,
+  `recipe.getComments()`) is fetched on first access, which in a template
+  happens *after* your service method returned. In practice this works,
+  because Spring Boot leaves **`spring.jpa.open-in-view=true`** on by
+  default — it holds the Hibernate session open for the whole request,
+  including view rendering. That's why the templates here can safely read
+  `recipe.user.username`. Two things to know: (a) it's why you may see a
+  `spring.jpa.open-in-view is enabled by default` warning in your startup
+  log — that's informational, not a problem for this project; (b) if you
+  ever set it to `false`, every lazy access from a template starts throwing
+  `LazyInitializationException` (§18), and you'd then need to load what the
+  view needs inside a `@Transactional` method or with a `JOIN FETCH` query.
+  The `RecipeController.view()` example in §12.8 is written the safe way —
+  it hands the template plain values instead of relying on lazy loading.
+- **Build order.** Don't write all controllers now — `HomeController` at M4,
+  `ProfileController` at M9, `ExternalRecipeController` at M10 (§17).
+
+### 12.8 Model contract: exactly what each template expects
+
+The templates in §13 are already written, so each controller method has a
+precise job: put these named attributes on the `Model`, then return the view
+name. A missing attribute usually shows up as a blank spot on the page, or a
+`SpringEL` error in the console naming the attribute — check this table
+first.
+
+| View name | Controller method | Required model attributes |
+|---|---|---|
+| `login` | `AuthController.loginPage()` | *(none — reads `param.error` / `param.logout`)* |
+| `register` | `AuthController.registerForm()` / `.register()` | `form` : `RegisterForm` |
+| `home` | `HomeController.home()` | `recipeOfTheDay` : `Recipe` **or `null`** |
+| `following` | `HomeController.following()` | *(none)* |
+| `recipe-list` | `RecipeController.list()` | `recipes` : `List<Recipe>`, plus `title`, `temperature`, `dishType`, `dairy`, `sweetness`, `meat`, `seafood` (the current filter values, echoed back) |
+| `my-recipes` | `RecipeController.mine()` | `recipes` : `List<Recipe>` |
+| `recipe-view` | `RecipeController.view()` | `recipe` : `Recipe`, `comments` : `List<Comment>`, `isOwner` : `boolean`, `isFavorite` : `boolean`, `userRating` : `Integer` **or `null`** |
+| `recipe-form` | `RecipeController.newForm()` / `.editForm()` / `ExternalRecipeController.importForm()` | `form` : `RecipeForm`, `formAction` : `String`, `heading` : `String` |
+| `profile` | `ProfileController.profile()` | `user` : `User`, `recipes` : `List<Recipe>`, `favoriteCount` : `int` |
+| `profile-edit` | `ProfileController.editForm()` | `form` : `UpdateProfileForm` |
+| `favorites` | `ProfileController.favorites()` | `recipes` : `Set<Recipe>` or `List<Recipe>` |
+| `error` | *(none — Spring Boot renders it automatically)* | *(Spring supplies `status`, `error`, `message`, `path`)* |
+
+Three notes on that table:
+
+- **`recipe-form` is one template serving three routes.** It doesn't know
+  whether you're creating, editing, or importing — you tell it by setting
+  `formAction` (where the form POSTs) and `heading` (what the page says).
+  That keeps the branching in Java, where you can read it.
+- **`recipe-view` takes plain flags, not entities to dig through.** The
+  template never asks "is the current user the owner?" itself, because
+  answering that in a template means null-checking an anonymous principal in
+  SpringEL. You compute `isOwner` / `isFavorite` / `userRating` in the
+  controller, where it's ordinary Java.
+- **The comment and rating forms need no model attribute.** They post plain
+  `name="comment"` / `name="rating"` parameters, which
+  `@ModelAttribute CommentForm` / `RatingForm` still binds automatically. So
+  don't add `commentForm` / `ratingForm` to the model — nothing reads them.
+
+#### A fully-worked example: `RecipeController.view()`
+
+This is the method with the most model attributes, so here it is complete —
+use it as the pattern for filling in the rest of §12.3's stubs.
+
+```java
+@GetMapping("/{id}")
+public String view(@PathVariable Long id,
+                   @AuthenticationPrincipal AppUserDetails principal,
+                   Model model) {
+
+    Recipe recipe = recipeService.findById(id);   // throws if not found
+
+    // This route is PUBLIC (requirements.md use case 7), so principal is
+    // null for a logged-out visitor. Everything below has to cope with that.
+    User currentUser = (principal != null) ? principal.getUser() : null;
+
+    boolean isOwner = currentUser != null
+        && recipe.getUser().getId().equals(currentUser.getId());
+
+    boolean isFavorite = currentUser != null
+        && currentUser.getFavoriteRecipes().contains(recipe);
+
+    Integer userRating = null;
+    if (currentUser != null) {
+        userRating = ratingRepository
+            .findByUserIdAndRecipeId(currentUser.getId(), id)
+            .map(Rating::getValue)
+            .orElse(null);
+    }
+
+    model.addAttribute("recipe", recipe);
+    model.addAttribute("comments", commentRepository.findByRecipeId(id));
+    model.addAttribute("isOwner", isOwner);
+    model.addAttribute("isFavorite", isFavorite);
+    model.addAttribute("userRating", userRating);
+    return "recipe-view";
+}
+```
+
+Add a `findById(Long)` to `RecipeService` for the first line (it's the same
+"load or throw `IllegalStateException`" you already wrote three times inside
+`update`/`delete`/`rate` — pull it out into one method and call it from all
+four). Reaching `commentRepository`/`ratingRepository` from the controller
+as shown is the short path; the tidier version is to expose
+`recipeService.commentsFor(id)` / `recipeService.ratingBy(user, id)` and
+keep the controller free of repositories.
+
+#### Wiring the three `recipe-form` routes
+
+```java
+// GET /recipes/new
+model.addAttribute("form", new RecipeForm());
+model.addAttribute("formAction", "/recipes");
+model.addAttribute("heading", "Share a recipe");
+return "recipe-form";
+
+// GET /recipes/{id}/edit — copy the entity's fields onto a fresh form
+RecipeForm form = new RecipeForm();
+form.setTitle(recipe.getTitle());
+form.setDescription(recipe.getDescription());
+form.setIngredients(recipe.getIngredients());
+form.setInstructions(recipe.getInstructions());
+form.setTemperature(recipe.getTemperature());
+form.setDishType(recipe.getDishType());
+form.setDairy(recipe.getDairy());
+form.setSweetness(recipe.getSweetness());
+form.setMeat(recipe.getMeat());
+form.setSeafood(recipe.getSeafood());
+model.addAttribute("form", form);
+model.addAttribute("formAction", "/recipes/" + id);
+model.addAttribute("heading", "Edit your recipe");
+return "recipe-form";
+```
+
+**Important:** whenever a POST fails validation and you `return
+"recipe-form";` to re-render, you must re-add `formAction` and `heading`
+too — they aren't automatically carried over from the GET, and without them
+the form posts to the wrong URL (or the page fails to render). Spring
+re-adds `form` for you because it's the `@ModelAttribute`, but nothing else.
+
+#### The tag values must match in two places
+
+The six tag dropdowns appear in both `recipe-form.html` (what gets saved)
+and `recipe-list.html` (what you can filter by). They currently offer:
+
+| Field | Options |
+|---|---|
+| `temperature` | Hot, Cold |
+| `dishType` | Appetizer, Main Course, Side, Dessert, Snack, Drink |
+| `dairy` | Dairy, Dairy-Free |
+| `sweetness` | Sweet, Savory |
+| `meat` | Meat, Vegetarian |
+| `seafood` | Seafood, No Seafood |
+
+If these don't match your original `forms.py` `RadioField` choices, change
+them — but change them in **both** templates, or filtering silently returns
+nothing (the saved value never equals the filtered value). All options must
+also stay under 20 characters, since `schema.sql` declares these columns
+`VARCHAR(20)`.
 
 ---
 
-## 13. Thymeleaf Basics + Minimal Placeholder Templates
+## 13. Thymeleaf Templates (already written for you)
 
-You said front-end/styling help will come later — this section gives you
-just enough to get pages rendering (unstyled) so you can actually run and
-click through the app while building the backend. We'll do a real design
-pass over these later.
+The front end is **already built** and lives in
+`src/main/resources/templates/`. It's Bootstrap 5.3 (from a CDN) plus a warm
+kitchen theme in `src/main/resources/static/css/app.css`. Your job in §12 is
+to write controllers that hand these templates the model attributes they
+expect (§12.8) — not to write HTML.
+
+Read §13.1 to understand the Thymeleaf syntax you'll see in them, then §13.2
+for what each file is and how they fit together.
 
 ### 13.1 Jinja2 → Thymeleaf, side by side
 
@@ -1681,7 +2090,7 @@ pass over these later.
 | `{{ variable }}` | `<span th:text="${variable}"></span>` |
 | `{% for x in list %}...{% endfor %}` | `<tr th:each="x : ${list}">...</tr>` |
 | `{% if condition %}...{% endif %}` | `<div th:if="${condition}">...</div>` |
-| `{% extends "base.html" %}` + `{% block content %}` (`base.html:7`) | Thymeleaf's layout dialect — `th:insert`/`th:replace` with named fragments (a different-enough mechanism that it's worth reading the [Thymeleaf layout docs](https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html#template-layout) separately rather than a 1-line mapping) |
+| `{% extends "base.html" %}` + `{% block content %}` (`base.html:7`) | **Inverted:** Jinja2 pages *extend* a base that pulls their content in; Thymeleaf pages *pull pieces in* with `th:replace="~{fragments/layout :: navbar}"`. There's no "extends" here — see §13.2 |
 | `url_for('static', filename='styles.css')` (`base.html:4`) | `th:href="@{/styles.css}"` |
 | `url_for('endpoint', id=x)` | `th:href="@{/recipes/{id}(id=${x})}"` |
 | `{{ form.title(...) }}` (WTForms rendering) | `<input th:field="*{title}">`, bound to whatever object the template's top-level `th:object` points at |
@@ -1694,72 +2103,139 @@ without the Thymeleaf engine processing them) — this means you can open a
 template as a static mockup even without the server running, which is handy
 once we get to the design pass.
 
-### 13.2 Minimal placeholder templates (to get the app running)
+### 13.2 The templates in this project
 
-These are intentionally bare — just enough structure to prove your
-controllers work end-to-end. Create these now; we'll replace them with real
-designs later.
+Twelve files under `src/main/resources/templates/`, plus one stylesheet:
 
-`src/main/resources/templates/login.html`:
+| File | Rendered by | Purpose |
+|---|---|---|
+| `fragments/layout.html` | *(never directly)* | Shared pieces — see below |
+| `login.html` | `GET /login` | Email + password, `?error` / `?logout` banners |
+| `register.html` | `GET`/`POST /register` | Bound to `RegisterForm` |
+| `home.html` | `GET /home` | Recipe-of-the-day hero + quick links |
+| `recipe-list.html` | `GET /recipes` | Search box + 6 tag filters + card grid |
+| `my-recipes.html` | `GET /recipes/mine` | The user's own recipes |
+| `recipe-view.html` | `GET /recipes/{id}` | Full recipe, comments, star rating, favorite/edit/delete |
+| `recipe-form.html` | `GET /recipes/new`, `GET /recipes/{id}/edit`, `GET /recipes/import/{mealId}` | One form for create, edit **and** import |
+| `profile.html` | `GET /profile` | Profile card, stats, own recipes, delete-account |
+| `profile-edit.html` | `GET /profile/edit` | Bound to `UpdateProfileForm` |
+| `favorites.html` | `GET /profile/favorites` | Favorited recipes |
+| `following.html` | `GET /home/following` | Honest "not built" empty state |
+| `error.html` | *(automatic)* | Replaces Spring's Whitelabel error page |
+| `static/css/app.css` | *(linked from `head`)* | The warm theme layered over Bootstrap |
+
+Every template opens with an HTML comment listing its exact model contract —
+read that comment before writing the controller method that renders it. The
+same contracts are collected in the table at §12.8.
+
+#### How the shared layout works
+
+There's no `base.html` to extend (this project doesn't use the
+thymeleaf-layout-dialect — it isn't in `pom.xml`). Instead
+`fragments/layout.html` defines seven named fragments, and each page pulls
+in the ones it wants:
+
 ```html
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Login</title></head>
+<head th:replace="~{fragments/layout :: head('My profile')}"></head>
 <body>
-  <h1>Login</h1>
-  <form th:action="@{/login}" method="post">
-    <label>Email <input type="email" name="email"></label><br>
-    <label>Password <input type="password" name="password"></label><br>
-    <button type="submit">Log In</button>
-  </form>
-  <a th:href="@{/register}">Register an account</a>
+  <nav th:replace="~{fragments/layout :: navbar}"></nav>
+  <div th:replace="~{fragments/layout :: flash}"></div>
+
+  <main> ...this page's own content... </main>
+
+  <footer th:replace="~{fragments/layout :: footer}"></footer>
+  <th:block th:replace="~{fragments/layout :: scripts}"></th:block>
 </body>
-</html>
-```
-Note there's no explicit CSRF `<input>` here — Spring Security's Thymeleaf
-integration (from the `thymeleaf-extras-springsecurity6` dependency in §4)
-adds it automatically to any `<form th:action="...">`, the same way
-`{{ form.csrf_token }}` did implicitly in the Flask-WTF version.
-
-`src/main/resources/templates/register.html`:
-```html
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<head><title>Register</title></head>
-<body>
-  <h1>Register</h1>
-  <form th:action="@{/register}" th:object="${form}" method="post">
-    <label>Username <input type="text" th:field="*{username}"></label>
-    <span th:errors="*{username}" style="color:red"></span><br>
-
-    <label>Email <input type="email" th:field="*{email}"></label>
-    <span th:errors="*{email}" style="color:red"></span><br>
-
-    <label>Password <input type="password" th:field="*{password}"></label>
-    <span th:errors="*{password}" style="color:red"></span><br>
-
-    <button type="submit">Register</button>
-  </form>
-</body>
-</html>
 ```
 
-For every other page (`recipe-list.html`, `recipe-view.html`, `profile.html`,
-etc.), start with the same pattern: plain HTML, a heading, a `th:each` loop
-or `th:object` form as needed, no CSS. Get every route rendering *something*
-before we style anything.
+| Fragment | What it gives you |
+|---|---|
+| `head(pageTitle)` | `<title>`, Google Fonts, Bootstrap CSS, Bootstrap Icons, `app.css` |
+| `navbar` | Brand, nav links, and a login/logout area that switches on `sec:authorize` |
+| `flash` | Renders `${message}` (green) and `${error}` (red) — your `flash()` replacement |
+| `stars(rating)` | Read-only ★★★☆☆ display; handles a `null` average |
+| `recipeCard(recipe)` | One recipe card, used by four different list pages |
+| `footer` | Site footer |
+| `scripts` | Bootstrap's JS bundle (needed for dropdowns and modals) |
+
+`th:replace` *replaces* the host tag with the fragment; `th:insert` would
+nest it inside. These fragments are written for `th:replace` — the empty
+host tags above are just placeholders that disappear.
+
+To loop cards, pass each item into the fragment:
+```html
+<div class="row g-4">
+  <div th:each="r : ${recipes}" th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+</div>
+```
+
+#### Things in these templates worth understanding
+
+- **CSRF is automatic, but only with `th:action`.** Every `<form>` here uses
+  `th:action="@{...}"`, which makes Spring Security inject the hidden CSRF
+  token — the equivalent of Flask-WTF's `{{ form.csrf_token }}`. A plain
+  `action="/recipes"` gets you a **403 on POST** (§18).
+- **Logout is a POST form, not a link.** Spring Security 6+ CSRF-protects
+  logout, so `<a href="/logout">` returns 405. The navbar wraps it in a tiny
+  form styled as a dropdown item.
+- **`sec:authorize` is your `current_user.is_authenticated`.** Used as
+  `sec:authorize="isAuthenticated()"` and `sec:authorize="isAnonymous()"`.
+  The navbar also prints the current username with
+  `sec:authentication="principal.user.username"` — that reaches through
+  `AppUserDetails.getUser()`, which is exactly why that getter exists (§10.1).
+- **Multi-line text keeps its line breaks via CSS, not `th:utext`.**
+  Ingredients and instructions render inside `style="white-space: pre-line"`
+  with plain `th:text`. Using `th:utext` would render the text unescaped and
+  hand you a stored-XSS hole, since recipe bodies are user input.
+- **The star rating picker is CSS-only.** Five radio inputs written 5→1 in
+  the DOM, flipped visually with `flex-direction: row-reverse`, so the
+  `input:checked ~ label` sibling selector can light up every star to the
+  left. No JavaScript.
+- **Bootstrap comes from a CDN**, so the app needs an internet connection to
+  look right. To go offline later, download `bootstrap.min.css` /
+  `bootstrap.bundle.min.js` into `static/` and change the two links in the
+  `head` and `scripts` fragments.
+- **`th:if="${#lists.isEmpty(recipes)}"`** drives every empty state. Each
+  list page has a designed "nothing here yet" panel — so a controller that
+  correctly returns an empty list still produces a good-looking page.
+
+#### Making them your own
+
+Almost all of the visual identity is CSS custom properties at the top of
+`static/css/app.css`:
+
+```css
+:root {
+    --cream: #fdf7f0;      /* page background */
+    --terracotta: #c9603f; /* primary buttons, links, brand */
+    --honey: #e0a458;      /* stars, secondary accents */
+    --sage: #7d9471;       /* tag pills */
+    --cocoa: #43342a;      /* body text */
+}
+```
+
+Change those five and the whole app changes with them. Headings use
+*Fraunces*, body text uses *Nunito* — both loaded in the `head` fragment.
 
 ---
 
 ## 14. Static Resources
 
-- Move `app/static/styles.css` → `src/main/resources/static/styles.css`
-- Move `app/static/*.png` → `src/main/resources/static/images/`
-- Reference in Thymeleaf as `<link rel="stylesheet" th:href="@{/styles.css}">`
-  (replaces `url_for('static', filename='styles.css')` in `base.html:4`)
+- The app's stylesheet already lives at
+  `src/main/resources/static/css/app.css`, linked from the `head` fragment as
+  `<link rel="stylesheet" th:href="@{/css/app.css}">` (this replaces
+  `url_for('static', filename='styles.css')` in `base.html:4`). You do **not**
+  need to port the old `styles.css` — the new theme supersedes it.
+- Move `app/static/*.png` → `src/main/resources/static/images/`, then
+  reference them as `th:src="@{/images/whatever.png}"`.
 - Spring Boot serves everything under `src/main/resources/static/` at the web
   root automatically — no route needed, same as Flask's implicit `/static/`
   handling.
+- **But Spring Security still guards those URLs.** `SecurityConfig` (§10.3)
+  permits `/css/**` and `/images/**`, which is why the stylesheet loads on
+  the login page while you're logged out. If you add a new static folder
+  (say `static/js/`), add `/js/**` to `.requestMatchers(...).permitAll()` or
+  it will 302-redirect to the login page and silently not load.
 
 ---
 
@@ -1950,9 +2426,12 @@ for the first time.
 10. **M9 — Profile management:** `UserService.updateProfile()`/
     `deleteAccount()`, `ProfileController`.
 11. **M10 — External API:** `MealDbClient` (§15), `ExternalRecipeController`.
-12. **M11 — Front-end pass:** come back for help turning the placeholder
-    templates from §13.2 (and their equivalents for every other page) into
-    real designs once the backend is functionally complete.
+12. **M11 — Front-end polish:** the templates in §13.2 are already written
+    and styled, so there's no build step here — this milestone is about
+    tuning: adjust the five CSS custom properties in `static/css/app.css` to
+    taste, fix the tag option lists if they don't match your original
+    `forms.py` choices (§12.8), and click every page looking for an empty
+    state or error path that reads badly.
 13. **M12 — Tests & cleanup:** add tests (§16) for the trickiest logic
     (rating upsert, tag search, cascade delete).
 
