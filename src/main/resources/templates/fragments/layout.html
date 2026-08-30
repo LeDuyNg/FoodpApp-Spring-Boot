@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!--
+  Shared building blocks for every page.
+
+  This project does NOT use the thymeleaf-layout-dialect (it isn't in
+  pom.xml), so pages don't "extend" a base template the way Jinja2's
+  {% extends "base.html" %} did. Instead every page pulls the pieces it
+  needs in with th:replace:
+
+      <head th:replace="~{fragments/layout :: head('Home')}"></head>
+      <nav  th:replace="~{fragments/layout :: navbar}"></nav>
+
+  The named fragments below are: head(pageTitle), navbar, flash,
+  stars(rating), recipeCard(recipe), footer, scripts.
+-->
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- ================================ HEAD ============================= -->
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' · FOODpApp'">FOODpApp</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;600;700;800&display=swap"
+          rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Our own warm theme, layered on top of Bootstrap. Served from
+         src/main/resources/static/css/app.css — SecurityConfig permits
+         /css/** so it loads even when logged out. -->
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<body>
+
+<!-- =============================== NAVBAR ============================ -->
+<nav th:fragment="navbar" class="navbar navbar-expand-lg app-navbar sticky-top">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/home}">
+            <i class="bi bi-egg-fried"></i> FOODpApp
+        </a>
+
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#appNav"
+                aria-controls="appNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="appNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-lg-1">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/home}">
+                        <i class="bi bi-house-heart me-1"></i>Home
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/recipes}">
+                        <i class="bi bi-search me-1"></i>Browse
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/recipes/mine}">
+                        <i class="bi bi-journal-bookmark me-1"></i>My Recipes
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/profile/favorites}">
+                        <i class="bi bi-heart me-1"></i>Favorites
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="isAuthenticated()">
+                    <a class="nav-link" th:href="@{/recipes/random-from-api}">
+                        <i class="bi bi-shuffle me-1"></i>Surprise Me
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Logged out -->
+            <div class="d-flex gap-2" sec:authorize="isAnonymous()">
+                <a class="btn btn-outline-primary btn-sm" th:href="@{/login}">Log in</a>
+                <a class="btn btn-primary btn-sm" th:href="@{/register}">Join us</a>
+            </div>
+
+            <!-- Logged in -->
+            <div class="d-flex align-items-center gap-2" sec:authorize="isAuthenticated()">
+                <a class="btn btn-primary btn-sm" th:href="@{/recipes/new}">
+                    <i class="bi bi-plus-lg me-1"></i>Share a recipe
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-soft btn-sm dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span sec:authentication="principal.user.username">cook</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-item" th:href="@{/profile}">
+                            <i class="bi bi-person me-2"></i>My profile</a></li>
+                        <li><a class="dropdown-item" th:href="@{/profile/edit}">
+                            <i class="bi bi-pencil me-2"></i>Edit profile</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <!-- Spring Security 6+ requires POST for logout (CSRF
+                                 protected), so this is a form, not a plain link.
+                                 th:action injects the CSRF token automatically. -->
+                            <form th:action="@{/logout}" method="post" class="px-1">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Log out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ======================== FLASH MESSAGES =========================== -->
+<!--
+  Reads the flash attributes a controller set with
+  redirectAttributes.addFlashAttribute("message", ...) / ("error", ...)
+  — the Spring equivalent of Flask's flash(msg, category).
+-->
+<div th:fragment="flash" class="container mt-3">
+    <div th:if="${message}" class="alert alert-success d-flex align-items-center" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${message}">Saved.</span>
+    </div>
+    <div th:if="${error}" class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${error}">Something went wrong.</span>
+    </div>
+</div>
+
+<!-- ===================== READ-ONLY STAR DISPLAY ====================== -->
+<!-- Usage: <span th:replace="~{fragments/layout :: stars(${recipe.averageRating})}"></span> -->
+<span th:fragment="stars(rating)" class="stars-static">
+    <i th:each="i : ${#numbers.sequence(1, 5)}"
+       class="bi"
+       th:classappend="${rating != null and i le rating} ? 'bi-star-fill' : 'bi-star'"></i>
+    <small class="text-muted-warm ms-1"
+           th:text="${rating != null} ? ${#numbers.formatDecimal(rating, 1, 1)} : 'not yet rated'">—</small>
+</span>
+
+<!-- ========================== RECIPE CARD ============================ -->
+<!-- Usage: <div th:replace="~{fragments/layout :: recipeCard(${r})}"></div> -->
+<div th:fragment="recipeCard(recipe)" class="col-12 col-md-6 col-lg-4">
+    <article class="recipe-card d-flex flex-column">
+        <div class="p-4 d-flex flex-column flex-grow-1">
+            <h3 class="h5 card-title mb-2">
+                <a th:href="@{/recipes/{id}(id=${recipe.id})}"
+                   th:text="${recipe.title}">Grandma's Tomato Soup</a>
+            </h3>
+
+            <p class="text-muted-warm small mb-3 flex-grow-1"
+               th:text="${#strings.abbreviate(recipe.description, 110)}">
+                A cosy bowl for a rainy afternoon.
+            </p>
+
+            <div class="mb-3">
+                <span th:if="${recipe.temperature}" class="tag-pill" th:text="${recipe.temperature}">Hot</span>
+                <span th:if="${recipe.dishType}" class="tag-pill tag-honey" th:text="${recipe.dishType}">Main</span>
+                <span th:if="${recipe.meat}" class="tag-pill" th:text="${recipe.meat}">Vegetarian</span>
+                <span th:if="${recipe.seafood}" class="tag-pill" th:text="${recipe.seafood}">No Seafood</span>
+                <span th:if="${recipe.dairy}" class="tag-pill tag-honey" th:text="${recipe.dairy}">Dairy</span>
+                <span th:if="${recipe.sweetness}" class="tag-pill" th:text="${recipe.sweetness}">Savory</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top"
+                 style="border-color: var(--line) !important;">
+                <small class="text-muted-warm">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span th:text="${recipe.user != null} ? ${recipe.user.username} : 'someone'">cook</span>
+                </small>
+                <span th:replace="~{fragments/layout :: stars(${recipe.averageRating})}"></span>
+            </div>
+        </div>
+    </article>
+</div>
+
+<!-- ============================= FOOTER ============================== -->
+<footer th:fragment="footer" class="app-footer">
+    <div class="container text-center">
+        <p class="mb-1">
+            <i class="bi bi-egg-fried me-1" style="color: var(--terracotta);"></i>
+            <strong style="font-family: 'Fraunces', serif; color: var(--cocoa);">FOODpApp</strong>
+            — recipes worth passing down.
+        </p>
+        <p class="mb-0">Made in a warm kitchen. Spring Boot + Thymeleaf.</p>
+    </div>
+</footer>
+
+<!-- ============================= SCRIPTS ============================= -->
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</th:block>
+
+</body>
+</html>

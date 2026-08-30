@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!--
+  ONE template, used by THREE controller methods:
+    RecipeController.newForm()            GET  /recipes/new
+    RecipeController.editForm()           GET  /recipes/{id}/edit
+    ExternalRecipeController.importForm() GET  /recipes/import/{mealId}
+  ...and re-rendered by their POST counterparts when validation fails.
+
+  Model contract:
+    form       : RecipeForm — REQUIRED. Empty for "new", pre-filled from the
+                              entity for "edit", pre-filled from TheMealDB
+                              for "import".
+    formAction : String     — REQUIRED. Where this form POSTs to:
+                                "/recipes"                  (create)
+                                "/recipes/" + id            (edit)
+                                "/recipes/import/" + mealId (import)
+                              Built in the controller so this template
+                              doesn't need to know which mode it's in.
+    heading    : String     — REQUIRED. e.g. "Share a recipe" /
+                              "Edit your recipe" / "Make this recipe yours".
+
+  th:action="@{${formAction}}" runs the URL through Thymeleaf's link
+  expression, so the context path is handled and — importantly — the CSRF
+  token is still injected automatically.
+
+  The tag <option> values here MUST match the filter values in
+  recipe-list.html, or filtering silently returns nothing.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Write a recipe')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+
+                <div class="mb-4">
+                    <div class="hero-eyebrow mb-2"><i class="bi bi-pencil-square me-1"></i> Your kitchen</div>
+                    <h1 class="display-6 mb-1" th:text="${heading}">Share a recipe</h1>
+                    <p class="text-muted-warm">
+                        Write it the way you'd tell a friend — the details are what make it yours.
+                    </p>
+                </div>
+
+                <form th:action="@{${formAction}}" th:object="${form}" method="post" novalidate>
+
+                    <!-- ===================== The basics ==================== -->
+                    <section class="card-warm p-4 mb-4">
+                        <h2 class="h5 section-title"><i class="bi bi-card-heading"></i> The basics</h2>
+
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Recipe name</label>
+                            <input type="text" class="form-control" id="title" th:field="*{title}"
+                                   placeholder="Grandma's tomato soup" maxlength="80">
+                            <span class="field-error" th:if="${#fields.hasErrors('title')}"
+                                  th:errors="*{title}">Title error</span>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="description" class="form-label">Short description</label>
+                            <textarea class="form-control" id="description" th:field="*{description}" rows="3"
+                                      placeholder="A cosy bowl for a rainy afternoon…"></textarea>
+                            <div class="form-text">One or two sentences — this is what people see while browsing.</div>
+                            <span class="field-error" th:if="${#fields.hasErrors('description')}"
+                                  th:errors="*{description}">Description error</span>
+                        </div>
+                    </section>
+
+                    <!-- ==================== How to make it ================= -->
+                    <section class="card-warm p-4 mb-4">
+                        <h2 class="h5 section-title"><i class="bi bi-basket"></i> How to make it</h2>
+
+                        <div class="mb-3">
+                            <label for="ingredients" class="form-label">Ingredients</label>
+                            <textarea class="form-control" id="ingredients" th:field="*{ingredients}" rows="7"
+                                      placeholder="2 tbsp olive oil&#10;1 onion, chopped&#10;800g tinned tomatoes"></textarea>
+                            <div class="form-text">One per line.</div>
+                            <span class="field-error" th:if="${#fields.hasErrors('ingredients')}"
+                                  th:errors="*{ingredients}">Ingredients error</span>
+                        </div>
+
+                        <div class="mb-0">
+                            <label for="instructions" class="form-label">Instructions</label>
+                            <textarea class="form-control" id="instructions" th:field="*{instructions}" rows="9"
+                                      placeholder="Warm the oil over a low heat…"></textarea>
+                            <div class="form-text">Step by step, in your own words.</div>
+                            <span class="field-error" th:if="${#fields.hasErrors('instructions')}"
+                                  th:errors="*{instructions}">Instructions error</span>
+                        </div>
+                    </section>
+
+                    <!-- ======================== Tags ======================= -->
+                    <section class="card-warm p-4 mb-4">
+                        <h2 class="h5 section-title"><i class="bi bi-tags"></i> Tags</h2>
+                        <p class="text-muted-warm small mb-3">
+                            Optional, but they're how other cooks will find this dish.
+                        </p>
+
+                        <div class="row g-3">
+                            <div class="col-6 col-md-4">
+                                <label for="temperature" class="form-label">Temperature</label>
+                                <select class="form-select" id="temperature" th:field="*{temperature}">
+                                    <option value="">— none —</option>
+                                    <option value="Hot">Hot</option>
+                                    <option value="Cold">Cold</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-4">
+                                <label for="dishType" class="form-label">Dish type</label>
+                                <select class="form-select" id="dishType" th:field="*{dishType}">
+                                    <option value="">— none —</option>
+                                    <option value="Appetizer">Appetizer</option>
+                                    <option value="Main Course">Main Course</option>
+                                    <option value="Side">Side</option>
+                                    <option value="Dessert">Dessert</option>
+                                    <option value="Snack">Snack</option>
+                                    <option value="Drink">Drink</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-4">
+                                <label for="dairy" class="form-label">Dairy</label>
+                                <select class="form-select" id="dairy" th:field="*{dairy}">
+                                    <option value="">— none —</option>
+                                    <option value="Dairy">Dairy</option>
+                                    <option value="Dairy-Free">Dairy-Free</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-4">
+                                <label for="sweetness" class="form-label">Sweetness</label>
+                                <select class="form-select" id="sweetness" th:field="*{sweetness}">
+                                    <option value="">— none —</option>
+                                    <option value="Sweet">Sweet</option>
+                                    <option value="Savory">Savory</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-4">
+                                <label for="meat" class="form-label">Meat</label>
+                                <select class="form-select" id="meat" th:field="*{meat}">
+                                    <option value="">— none —</option>
+                                    <option value="Meat">Meat</option>
+                                    <option value="Vegetarian">Vegetarian</option>
+                                </select>
+                            </div>
+
+                            <div class="col-6 col-md-4">
+                                <label for="seafood" class="form-label">Seafood</label>
+                                <select class="form-select" id="seafood" th:field="*{seafood}">
+                                    <option value="">— none —</option>
+                                    <option value="Seafood">Seafood</option>
+                                    <option value="No Seafood">No Seafood</option>
+                                </select>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="d-flex gap-2 justify-content-end pb-4">
+                        <a th:href="@{/recipes/mine}" class="btn btn-soft">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check2 me-1"></i> Save recipe
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

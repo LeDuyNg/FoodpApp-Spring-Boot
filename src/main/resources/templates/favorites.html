@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!--
+  Rendered by ProfileController.favorites()  (GET /profile/favorites).
+
+  Model contract:
+    recipes : List<Recipe> or Set<Recipe> — REQUIRED (may be empty).
+              currentUser.getFavoriteRecipes(). That's a LAZY @ManyToMany,
+              so load it inside a @Transactional method (or rely on
+              spring.jpa.open-in-view, which Spring Boot leaves on by
+              default) — see §12.8 in the guide.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Favorites')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <div class="mb-4">
+            <div class="hero-eyebrow mb-2"><i class="bi bi-heart-fill me-1"></i> Saved by you</div>
+            <h1 class="display-6 mb-1">Recipes you've kept</h1>
+            <p class="text-muted-warm mb-0">The ones you want to come back to.</p>
+        </div>
+
+        <div class="row g-4" th:if="${not #lists.isEmpty(recipes)}">
+            <div th:each="r : ${recipes}" th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(recipes)}" class="empty-state">
+            <i class="bi bi-heart"></i>
+            <h3 class="h5">Nothing saved yet</h3>
+            <p class="mb-3">
+                When you find a recipe you love, tap <strong>Save to favorites</strong> and it'll wait for you here.
+            </p>
+            <a th:href="@{/recipes}" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Go find something good
+            </a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

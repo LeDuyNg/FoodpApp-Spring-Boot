@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<!--
+  Rendered by HomeController.home()  (GET /home).
+
+  Model contract:
+    recipeOfTheDay : Recipe or null   — REQUIRED (may be null when the
+                                        database has no recipes yet; the
+                                        th:if/th:unless below handles that,
+                                        so do NOT build a fake id=-1 Recipe
+                                        the way the original Flask code did).
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <!-- ===================== Recipe of the day ===================== -->
+        <section class="hero-panel mb-5">
+            <div class="hero-eyebrow mb-2">
+                <i class="bi bi-sun me-1"></i> Recipe of the day
+            </div>
+
+            <!-- There IS a recipe of the day -->
+            <div th:if="${recipeOfTheDay != null}" class="row align-items-center g-4">
+                <div class="col-lg-8">
+                    <h1 class="display-5 mb-3" th:text="${recipeOfTheDay.title}">
+                        Grandma's Tomato Soup
+                    </h1>
+                    <p class="lead text-muted-warm mb-3"
+                       th:text="${#strings.abbreviate(recipeOfTheDay.description, 220)}">
+                        A cosy bowl for a rainy afternoon.
+                    </p>
+
+                    <div class="mb-3">
+                        <span th:if="${recipeOfTheDay.temperature}" class="tag-pill"
+                              th:text="${recipeOfTheDay.temperature}">Hot</span>
+                        <span th:if="${recipeOfTheDay.dishType}" class="tag-pill tag-honey"
+                              th:text="${recipeOfTheDay.dishType}">Main</span>
+                        <span th:if="${recipeOfTheDay.dairy}" class="tag-pill"
+                              th:text="${recipeOfTheDay.dairy}">Dairy</span>
+                        <span th:if="${recipeOfTheDay.sweetness}" class="tag-pill tag-honey"
+                              th:text="${recipeOfTheDay.sweetness}">Savory</span>
+                        <span th:if="${recipeOfTheDay.meat}" class="tag-pill"
+                              th:text="${recipeOfTheDay.meat}">Vegetarian</span>
+                        <span th:if="${recipeOfTheDay.seafood}" class="tag-pill tag-honey"
+                              th:text="${recipeOfTheDay.seafood}">No Seafood</span>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                        <a class="btn btn-primary"
+                           th:href="@{/recipes/{id}(id=${recipeOfTheDay.id})}">
+                            <i class="bi bi-book me-1"></i> Cook this today
+                        </a>
+                        <small class="text-muted-warm">
+                            <i class="bi bi-person-circle me-1"></i>
+                            shared by
+                            <strong th:text="${recipeOfTheDay.user != null}
+                                             ? ${recipeOfTheDay.user.username} : 'a friend'">cook</strong>
+                        </small>
+                        <span th:replace="~{fragments/layout :: stars(${recipeOfTheDay.averageRating})}"></span>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 text-center d-none d-lg-block">
+                    <i class="bi bi-cup-hot" style="font-size: 8rem; color: var(--terracotta); opacity: 0.5;"></i>
+                </div>
+            </div>
+
+            <!-- No recipes in the database yet -->
+            <div th:unless="${recipeOfTheDay != null}" class="text-center py-4">
+                <i class="bi bi-basket" style="font-size: 3.5rem; color: var(--honey);"></i>
+                <h1 class="display-6 mt-3">The kitchen is quiet</h1>
+                <p class="text-muted-warm mb-4">
+                    No recipes have been shared yet — how about you go first?
+                </p>
+                <a class="btn btn-primary" th:href="@{/recipes/new}" sec:authorize="isAuthenticated()">
+                    <i class="bi bi-plus-lg me-1"></i> Share the first recipe
+                </a>
+                <a class="btn btn-primary" th:href="@{/register}" sec:authorize="isAnonymous()">
+                    <i class="bi bi-heart me-1"></i> Join and share one
+                </a>
+            </div>
+        </section>
+
+        <!-- ========================= Quick links ======================== -->
+        <h2 class="h4 section-title">Where to next?</h2>
+        <div class="row g-4">
+
+            <div class="col-12 col-md-4">
+                <a th:href="@{/recipes}" class="text-decoration-none">
+                    <div class="card-warm p-4 h-100 text-center">
+                        <i class="bi bi-search d-block mb-2"
+                           style="font-size: 2.25rem; color: var(--terracotta);"></i>
+                        <h3 class="h5 mb-1">Browse every recipe</h3>
+                        <p class="text-muted-warm small mb-0">
+                            Search by name or ingredient, then narrow it down by tag.
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <a th:href="@{/recipes/mine}" class="text-decoration-none">
+                    <div class="card-warm p-4 h-100 text-center">
+                        <i class="bi bi-journal-bookmark d-block mb-2"
+                           style="font-size: 2.25rem; color: var(--honey);"></i>
+                        <h3 class="h5 mb-1">Your recipe box</h3>
+                        <p class="text-muted-warm small mb-0">
+                            Everything you've written down, in one place.
+                        </p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <a th:href="@{/recipes/random-from-api}" class="text-decoration-none">
+                    <div class="card-warm p-4 h-100 text-center">
+                        <i class="bi bi-shuffle d-block mb-2"
+                           style="font-size: 2.25rem; color: var(--sage);"></i>
+                        <h3 class="h5 mb-1">Surprise me</h3>
+                        <p class="text-muted-warm small mb-0">
+                            Pull a random dish from TheMealDB and make it yours.
+                        </p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

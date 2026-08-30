@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+  Rendered by HomeController.following()  (GET /home/following).
+
+  Model contract: none.
+
+  This page exists in the original Flask templates but has no follow
+  model/feature behind it, and it isn't in requirements.md's functional
+  requirements. It's rendered here as an honest "not built yet" state.
+  Either build a real follow feature later, or delete this template
+  together with the controller method and the nav link.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Following')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <div class="mb-4">
+            <div class="hero-eyebrow mb-2"><i class="bi bi-people me-1"></i> Following</div>
+            <h1 class="display-6 mb-1">Cooks you follow</h1>
+        </div>
+
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h3 class="h5">Not on the menu yet</h3>
+            <p class="mb-3">
+                Following other cooks isn't built — for now, browsing is the best way
+                to find something new.
+            </p>
+            <a th:href="@{/recipes}" class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Browse recipes
+            </a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!--
+  Rendered by AuthController.registerForm() (GET /register) and re-rendered
+  by AuthController.register() (POST /register) when validation fails.
+
+  Model contract:
+    form : RegisterForm   — REQUIRED on both the GET and the failed POST.
+                            On GET, add an empty one:
+                            model.addAttribute("form", new RegisterForm());
+
+  th:object="${form}" binds the whole <form> to that object; th:field="*{x}"
+  then sets id, name and value for each input in one go, and th:errors="*{x}"
+  prints whatever Bean Validation (or result.rejectValue(...)) complained
+  about — the equivalent of {{ form.username.errors }} in Jinja2.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Join us')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+
+<main>
+    <div class="container">
+        <div class="auth-shell">
+
+            <div class="text-center mb-4">
+                <div class="hero-eyebrow mb-2">Pull up a chair</div>
+                <h1 class="display-6">Join the table</h1>
+                <p class="text-muted-warm">Save what you cook, share what you love.</p>
+            </div>
+
+            <div class="auth-card">
+                <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white" style="border-color: var(--line);">
+                                <i class="bi bi-person text-muted-warm"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username"
+                                   th:field="*{username}" placeholder="hungry_cook">
+                        </div>
+                        <span class="field-error" th:if="${#fields.hasErrors('username')}"
+                              th:errors="*{username}">Username error</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white" style="border-color: var(--line);">
+                                <i class="bi bi-envelope text-muted-warm"></i>
+                            </span>
+                            <input type="email" class="form-control" id="email"
+                                   th:field="*{email}" placeholder="you@kitchen.com">
+                        </div>
+                        <span class="field-error" th:if="${#fields.hasErrors('email')}"
+                              th:errors="*{email}">Email error</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white" style="border-color: var(--line);">
+                                <i class="bi bi-key text-muted-warm"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password"
+                                   th:field="*{password}" placeholder="••••••••">
+                        </div>
+                        <div class="form-text">At least 8 characters.</div>
+                        <span class="field-error" th:if="${#fields.hasErrors('password')}"
+                              th:errors="*{password}">Password error</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="bi bi-heart me-1"></i> Create my account
+                    </button>
+                </form>
+
+                <hr class="my-4" style="border-color: var(--line);">
+
+                <p class="text-center mb-0 text-muted-warm">
+                    Already have an account?
+                    <a th:href="@{/login}" class="fw-bold">Log in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

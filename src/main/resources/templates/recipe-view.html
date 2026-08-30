@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<!--
+  Rendered by RecipeController.view()  (GET /recipes/{id}).
+
+  Model contract:
+    recipe      : Recipe          — REQUIRED
+    comments    : List<Comment>   — REQUIRED (may be empty)
+    isOwner     : boolean         — REQUIRED: does the logged-in user own this
+                                    recipe? (false when nobody is logged in)
+    isFavorite  : boolean         — REQUIRED: has the logged-in user
+                                    favorited it? (false when logged out)
+    userRating  : Integer or null — the logged-in user's own 1-5 rating, so
+                                    their stars show as already filled
+
+  This route is PUBLIC (requirements.md use case 7: "Anyone can view the
+  details of a recipe"), so @AuthenticationPrincipal may be null in the
+  controller. Everything that needs a login is wrapped in
+  sec:authorize="isAuthenticated()" below.
+
+  The comment and rating forms post plain request parameters (name="comment",
+  name="rating") rather than using th:object/th:field. That means this
+  template needs NO form-backing objects in the model — the controller's
+  @ModelAttribute CommentForm / RatingForm still binds from those parameter
+  names automatically.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Recipe')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <a th:href="@{/recipes}" class="text-muted-warm small d-inline-block mb-3">
+            <i class="bi bi-arrow-left me-1"></i> Back to all recipes
+        </a>
+
+        <!-- ========================== Header =========================== -->
+        <div class="hero-panel mb-4">
+            <div class="row align-items-start g-3">
+                <div class="col-lg-8">
+                    <h1 class="display-6 mb-2" th:text="${recipe.title}">Grandma's Tomato Soup</h1>
+
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <small class="text-muted-warm">
+                            <i class="bi bi-person-circle me-1"></i>
+                            by <strong th:text="${recipe.user != null} ? ${recipe.user.username} : 'someone'">cook</strong>
+                        </small>
+                        <small class="text-muted-warm" th:if="${recipe.created != null}">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            <span th:text="${#temporals.format(recipe.created, 'd MMMM yyyy')}">1 January 2026</span>
+                        </small>
+                        <span th:replace="~{fragments/layout :: stars(${recipe.averageRating})}"></span>
+                    </div>
+
+                    <div>
+                        <span th:if="${recipe.temperature}" class="tag-pill" th:text="${recipe.temperature}">Hot</span>
+                        <span th:if="${recipe.dishType}" class="tag-pill tag-honey" th:text="${recipe.dishType}">Main</span>
+                        <span th:if="${recipe.dairy}" class="tag-pill" th:text="${recipe.dairy}">Dairy</span>
+                        <span th:if="${recipe.sweetness}" class="tag-pill tag-honey" th:text="${recipe.sweetness}">Savory</span>
+                        <span th:if="${recipe.meat}" class="tag-pill" th:text="${recipe.meat}">Vegetarian</span>
+                        <span th:if="${recipe.seafood}" class="tag-pill tag-honey" th:text="${recipe.seafood}">No Seafood</span>
+                    </div>
+                </div>
+
+                <!-- Favorite + owner actions -->
+                <div class="col-lg-4 text-lg-end">
+                    <div sec:authorize="isAuthenticated()" class="d-flex flex-wrap gap-2 justify-content-lg-end">
+
+                        <form th:unless="${isFavorite}"
+                              th:action="@{/recipes/{id}/favorite(id=${recipe.id})}" method="post">
+                            <button type="submit" class="btn btn-soft">
+                                <i class="bi bi-heart me-1"></i> Save to favorites
+                            </button>
+                        </form>
+
+                        <form th:if="${isFavorite}"
+                              th:action="@{/recipes/{id}/unfavorite(id=${recipe.id})}" method="post">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="bi bi-heart-fill me-1"></i> Favorited
+                            </button>
+                        </form>
+
+                        <a th:if="${isOwner}" class="btn btn-outline-primary"
+                           th:href="@{/recipes/{id}/edit(id=${recipe.id})}">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+
+                        <button th:if="${isOwner}" type="button" class="btn btn-outline-danger"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    </div>
+
+                    <div sec:authorize="isAnonymous()" class="text-lg-end">
+                        <a th:href="@{/login}" class="btn btn-soft">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Log in to save &amp; rate
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+
+            <!-- ===================== Recipe body ====================== -->
+            <div class="col-lg-8">
+
+                <section class="card-warm p-4 mb-4">
+                    <h2 class="h5 section-title"><i class="bi bi-chat-quote"></i> About this dish</h2>
+                    <p class="mb-0" style="white-space: pre-line;" th:text="${recipe.description}">
+                        A cosy bowl for a rainy afternoon.
+                    </p>
+                </section>
+
+                <section class="card-warm p-4 mb-4">
+                    <h2 class="h5 section-title"><i class="bi bi-basket"></i> Ingredients</h2>
+                    <!-- white-space: pre-line keeps the author's line breaks without
+                         needing th:utext (which would risk rendering raw HTML). -->
+                    <p class="mb-0" style="white-space: pre-line;" th:text="${recipe.ingredients}">
+                        2 tbsp olive oil
+                        1 onion, chopped
+                    </p>
+                </section>
+
+                <section class="card-warm p-4 mb-4">
+                    <h2 class="h5 section-title"><i class="bi bi-list-ol"></i> Instructions</h2>
+                    <p class="mb-0" style="white-space: pre-line;" th:text="${recipe.instructions}">
+                        Warm the oil, soften the onion, add everything else.
+                    </p>
+                </section>
+
+                <!-- ====================== Comments ===================== -->
+                <section class="card-warm p-4">
+                    <h2 class="h5 section-title">
+                        <i class="bi bi-chat-heart"></i>
+                        <span th:text="'Comments (' + ${#lists.size(comments)} + ')'">Comments (0)</span>
+                    </h2>
+
+                    <div sec:authorize="isAuthenticated()" class="mb-4">
+                        <form th:action="@{/recipes/{id}/comments(id=${recipe.id})}" method="post">
+                            <label for="comment" class="form-label">Leave a note for the cook</label>
+                            <textarea class="form-control mb-2" id="comment" name="comment" rows="3"
+                                      placeholder="I made this last night and…" required></textarea>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-send me-1"></i> Post comment
+                            </button>
+                        </form>
+                    </div>
+
+                    <p sec:authorize="isAnonymous()" class="text-muted-warm small">
+                        <a th:href="@{/login}">Log in</a> to join the conversation.
+                    </p>
+
+                    <div th:if="${not #lists.isEmpty(comments)}">
+                        <div th:each="c : ${comments}" class="comment-item">
+                            <div class="d-flex gap-3">
+                                <span class="avatar-dot"
+                                      th:text="${c.user != null}
+                                               ? ${#strings.toUpperCase(#strings.substring(c.user.username, 0, 1))}
+                                               : '?'">A</span>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-baseline mb-1">
+                                        <strong th:text="${c.user != null} ? ${c.user.username} : 'someone'">cook</strong>
+                                        <small class="text-muted-warm" th:if="${c.created != null}"
+                                               th:text="${#temporals.format(c.created, 'd MMM yyyy')}">1 Jan 2026</small>
+                                    </div>
+                                    <p class="mb-0" style="white-space: pre-line;" th:text="${c.comment}">
+                                        Lovely, thank you!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p th:if="${#lists.isEmpty(comments)}" class="text-muted-warm mb-0">
+                        No comments yet — be the first to say hello.
+                    </p>
+                </section>
+            </div>
+
+            <!-- ======================= Rating ========================= -->
+            <div class="col-lg-4">
+                <div class="card-warm p-4" style="position: sticky; top: 90px;">
+                    <h2 class="h5 section-title"><i class="bi bi-star"></i> Rate it</h2>
+
+                    <div class="text-center mb-3">
+                        <div class="h3 mb-0"
+                             th:text="${recipe.averageRating != null}
+                                      ? ${#numbers.formatDecimal(recipe.averageRating, 1, 1)} : '—'">4.5</div>
+                        <small class="text-muted-warm">average rating</small>
+                    </div>
+
+                    <div sec:authorize="isAuthenticated()">
+                        <form th:action="@{/recipes/{id}/ratings(id=${recipe.id})}" method="post"
+                              class="text-center">
+                            <!-- Stars are written 5→1 in the DOM; .star-picker's
+                                 flex-direction:row-reverse flips them back to 1→5
+                                 on screen, which lets plain CSS light up every
+                                 star to the left of the one you hover. -->
+                            <div class="star-picker mb-3">
+                                <input type="radio" name="rating" value="5" id="star5"
+                                       th:checked="${userRating != null and userRating == 5}">
+                                <label for="star5" title="Loved it">★</label>
+
+                                <input type="radio" name="rating" value="4" id="star4"
+                                       th:checked="${userRating != null and userRating == 4}">
+                                <label for="star4" title="Really good">★</label>
+
+                                <input type="radio" name="rating" value="3" id="star3"
+                                       th:checked="${userRating != null and userRating == 3}">
+                                <label for="star3" title="Good">★</label>
+
+                                <input type="radio" name="rating" value="2" id="star2"
+                                       th:checked="${userRating != null and userRating == 2}">
+                                <label for="star2" title="It was okay">★</label>
+
+                                <input type="radio" name="rating" value="1" id="star1"
+                                       th:checked="${userRating != null and userRating == 1}">
+                                <label for="star1" title="Not for me">★</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <span th:text="${userRating != null} ? 'Update my rating' : 'Submit rating'">
+                                    Submit rating
+                                </span>
+                            </button>
+                        </form>
+
+                        <p th:if="${userRating != null}" class="text-muted-warm small text-center mt-2 mb-0">
+                            You rated this <strong th:text="${userRating}">4</strong> out of 5.
+                        </p>
+                    </div>
+
+                    <p sec:authorize="isAnonymous()" class="text-muted-warm small text-center mb-0">
+                        <a th:href="@{/login}">Log in</a> to rate this recipe.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =================== Delete confirmation ===================== -->
+    <div th:if="${isOwner}" class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: var(--radius); border-color: var(--line);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Delete this recipe?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-muted-warm">
+                    <span th:text="'“' + ${recipe.title} + '”'">“Soup”</span>
+                    and all of its comments and ratings will be gone for good.
+                    This can't be undone.
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Keep it</button>
+                    <form th:action="@{/recipes/{id}/delete(id=${recipe.id})}" method="post">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Yes, delete it
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!--
+  Rendered by ProfileController.profile()  (GET /profile).
+
+  Model contract:
+    user          : User          — REQUIRED (principal.getUser())
+    recipes       : List<Recipe>  — REQUIRED (may be empty) — the user's own
+    favoriteCount : int/long      — REQUIRED — size of their favorites
+
+  Note the delete-account form at the bottom is a POST (inside a confirm
+  modal), NOT a GET link. The original Flask app deleted your whole account
+  from a plain <a href> — a link a browser or crawler could follow by
+  accident. Don't copy that.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My profile')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <!-- ========================= Profile card ====================== -->
+        <section class="hero-panel mb-5">
+            <div class="row align-items-center g-4">
+                <div class="col-auto">
+                    <div class="avatar-dot" style="width: 76px; height: 76px; font-size: 2rem;"
+                         th:text="${#strings.toUpperCase(#strings.substring(user.username, 0, 1))}">A</div>
+                </div>
+                <div class="col">
+                    <div class="hero-eyebrow mb-1">Your profile</div>
+                    <h1 class="display-6 mb-1" th:text="${user.username}">hungry_cook</h1>
+                    <p class="text-muted-warm mb-0">
+                        <i class="bi bi-envelope me-1"></i>
+                        <span th:text="${user.email}">you@kitchen.com</span>
+                    </p>
+                </div>
+                <div class="col-12 col-md-auto">
+                    <a th:href="@{/profile/edit}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i> Edit profile
+                    </a>
+                </div>
+            </div>
+
+            <hr class="my-4" style="border-color: var(--line);">
+
+            <div class="row text-center g-3">
+                <div class="col-6">
+                    <div class="h3 mb-0" th:text="${#lists.size(recipes)}">3</div>
+                    <small class="text-muted-warm">recipes shared</small>
+                </div>
+                <div class="col-6">
+                    <div class="h3 mb-0" th:text="${favoriteCount}">7</div>
+                    <small class="text-muted-warm">recipes favorited</small>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================= Their recipes ===================== -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h2 class="h4 mb-0">Recipes you've shared</h2>
+            <a th:href="@{/recipes/new}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i> Add a recipe
+            </a>
+        </div>
+
+        <div class="row g-4 mb-5" th:if="${not #lists.isEmpty(recipes)}">
+            <div th:each="r : ${recipes}" th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(recipes)}" class="empty-state mb-5">
+            <i class="bi bi-journal-plus"></i>
+            <h3 class="h5">You haven't shared anything yet</h3>
+            <p class="mb-3">Your first recipe is the hardest. After that it's just cooking.</p>
+            <a th:href="@{/recipes/new}" class="btn btn-primary">Write one now</a>
+        </div>
+
+        <!-- ========================= Danger zone ======================= -->
+        <section class="card-warm p-4 mb-4" style="border-color: #f2ccc4;">
+            <h2 class="h5 mb-2" style="color: #8f2f1e;">
+                <i class="bi bi-exclamation-triangle me-1"></i> Close your account
+            </h2>
+            <p class="text-muted-warm mb-3">
+                Deleting your account also deletes every recipe, comment and rating you've written.
+                There's no undo.
+            </p>
+            <button type="button" class="btn btn-outline-danger"
+                    data-bs-toggle="modal" data-bs-target="#deleteAccountModal">
+                <i class="bi bi-trash me-1"></i> Delete my account
+            </button>
+        </section>
+    </div>
+
+    <!-- =================== Delete account confirm ==================== -->
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: var(--radius); border-color: var(--line);">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">Delete your account?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-muted-warm">
+                    Everything you've shared will be permanently removed —
+                    <strong th:text="${#lists.size(recipes)}">3</strong> recipes, plus all of your
+                    comments and ratings. This can't be undone.
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Never mind</button>
+                    <form th:action="@{/profile/delete}" method="post">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Yes, delete my account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

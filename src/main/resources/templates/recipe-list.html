@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!--
+  Rendered by RecipeController.list()  (GET /recipes).
+
+  Model contract:
+    recipes     : List<Recipe>  — REQUIRED (may be empty)
+    title       : String or null }
+    temperature : String or null }
+    dishType    : String or null } the CURRENT filter values, echoed back so
+    dairy       : String or null } the form still shows what the user picked
+    sweetness   : String or null } after the page reloads. Just pass the same
+    meat        : String or null } @RequestParam values straight through.
+    seafood     : String or null }
+
+  The filter form is a GET form with plain name="..." inputs (no th:object /
+  th:field) because these are query parameters, not a bound DTO. Submitting
+  it produces /recipes?title=soup&dishType=Main+Course, which lands right
+  back in this same controller method.
+
+  NOTE: the option values below must match whatever your recipe form saves.
+  Change them in ONE place if you change them: here and in recipe-form.html.
+-->
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Browse recipes')}"></head>
+<body>
+
+<nav th:replace="~{fragments/layout :: navbar}"></nav>
+<div th:replace="~{fragments/layout :: flash}"></div>
+
+<main>
+    <div class="container py-4">
+
+        <div class="mb-4">
+            <div class="hero-eyebrow mb-2"><i class="bi bi-search me-1"></i> Browse</div>
+            <h1 class="display-6 mb-1">What are you in the mood for?</h1>
+            <p class="text-muted-warm">Search by name or ingredient, then narrow things down.</p>
+        </div>
+
+        <!-- ========================== Filters ========================== -->
+        <form th:action="@{/recipes}" method="get" class="card-warm p-4 mb-5">
+
+            <div class="row g-3 align-items-end">
+                <div class="col-12 col-lg-8">
+                    <label for="title" class="form-label">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white" style="border-color: var(--line);">
+                            <i class="bi bi-search text-muted-warm"></i>
+                        </span>
+                        <input type="text" class="form-control" id="title" name="title"
+                               th:value="${title}"
+                               placeholder="tomato, lasagne, something with lemon…">
+                    </div>
+                    <div class="form-text">Matches recipe titles and ingredient lists.</div>
+                </div>
+
+                <div class="col-12 col-lg-4 d-grid d-lg-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-funnel me-1"></i> Apply
+                    </button>
+                    <a th:href="@{/recipes}" class="btn btn-soft flex-grow-1 text-center">Clear</a>
+                </div>
+            </div>
+
+            <hr class="my-4" style="border-color: var(--line);">
+
+            <div class="row g-3">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="temperature" class="form-label">Temperature</label>
+                    <select class="form-select" id="temperature" name="temperature">
+                        <option value="" th:selected="${temperature == null or temperature.isEmpty()}">Any</option>
+                        <option value="Hot"  th:selected="${temperature == 'Hot'}">Hot</option>
+                        <option value="Cold" th:selected="${temperature == 'Cold'}">Cold</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="dishType" class="form-label">Dish type</label>
+                    <select class="form-select" id="dishType" name="dishType">
+                        <option value="" th:selected="${dishType == null or dishType.isEmpty()}">Any</option>
+                        <option value="Appetizer"   th:selected="${dishType == 'Appetizer'}">Appetizer</option>
+                        <option value="Main Course" th:selected="${dishType == 'Main Course'}">Main Course</option>
+                        <option value="Side"        th:selected="${dishType == 'Side'}">Side</option>
+                        <option value="Dessert"     th:selected="${dishType == 'Dessert'}">Dessert</option>
+                        <option value="Snack"       th:selected="${dishType == 'Snack'}">Snack</option>
+                        <option value="Drink"       th:selected="${dishType == 'Drink'}">Drink</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="dairy" class="form-label">Dairy</label>
+                    <select class="form-select" id="dairy" name="dairy">
+                        <option value="" th:selected="${dairy == null or dairy.isEmpty()}">Any</option>
+                        <option value="Dairy"      th:selected="${dairy == 'Dairy'}">Dairy</option>
+                        <option value="Dairy-Free" th:selected="${dairy == 'Dairy-Free'}">Dairy-Free</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="sweetness" class="form-label">Sweetness</label>
+                    <select class="form-select" id="sweetness" name="sweetness">
+                        <option value="" th:selected="${sweetness == null or sweetness.isEmpty()}">Any</option>
+                        <option value="Sweet"  th:selected="${sweetness == 'Sweet'}">Sweet</option>
+                        <option value="Savory" th:selected="${sweetness == 'Savory'}">Savory</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="meat" class="form-label">Meat</label>
+                    <select class="form-select" id="meat" name="meat">
+                        <option value="" th:selected="${meat == null or meat.isEmpty()}">Any</option>
+                        <option value="Meat"       th:selected="${meat == 'Meat'}">Meat</option>
+                        <option value="Vegetarian" th:selected="${meat == 'Vegetarian'}">Vegetarian</option>
+                    </select>
+                </div>
+
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="seafood" class="form-label">Seafood</label>
+                    <select class="form-select" id="seafood" name="seafood">
+                        <option value="" th:selected="${seafood == null or seafood.isEmpty()}">Any</option>
+                        <option value="Seafood"    th:selected="${seafood == 'Seafood'}">Seafood</option>
+                        <option value="No Seafood" th:selected="${seafood == 'No Seafood'}">No Seafood</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <!-- ========================== Results ========================== -->
+        <h2 class="h4 section-title">
+            <span th:text="${#lists.size(recipes)} + (${#lists.size(recipes)} == 1 ? ' recipe' : ' recipes')">
+                12 recipes
+            </span>
+        </h2>
+
+        <div class="row g-4" th:if="${not #lists.isEmpty(recipes)}">
+            <div th:each="r : ${recipes}" th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(recipes)}" class="empty-state">
+            <i class="bi bi-emoji-frown"></i>
+            <h3 class="h5">Nothing matched that</h3>
+            <p class="mb-3">Try a broader search, or clear a filter or two.</p>
+            <a th:href="@{/recipes}" class="btn btn-soft">Show me everything</a>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
