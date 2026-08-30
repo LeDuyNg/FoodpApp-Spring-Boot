@@ -21,7 +21,7 @@ public class Rating {
     @JoinColumn(name = "recipe_id", nullable = false)
     private Recipe recipe;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT")
     private int value;
 
     protected Rating() {}
