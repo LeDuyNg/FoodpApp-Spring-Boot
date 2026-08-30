@@ -36,13 +36,13 @@ public class AuthController {
             return "register";
         }
 
-        if (userService.emailTaken(form.getEmail())) {
-            result.rejectValue("email", "duplicate", "This email is already registered.");
+        if (userService.usernameTaken(form.getUsername())) {
+            result.rejectValue("username", "duplicate", "This username is already registered.");
             return "register";
         }
 
-        if (userService.usernameTaken(form.getUsername())) {
-            result.rejectValue("username", "duplicate", "This username is already registered.");
+        if (userService.emailTaken(form.getEmail())) {
+            result.rejectValue("email", "duplicate", "This email is already registered.");
             return "register";
         }
 

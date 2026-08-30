@@ -9,6 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -83,5 +86,17 @@ public class UserService {
                 .map(u -> u.getFavoriteRecipes().stream()
                         .anyMatch(r -> r.getId().equals(recipeId)))
                 .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public long favoriteCount(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalStateException("User not found"));
+        return user.getFavoriteRecipes().size();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Recipe>favoritesOf(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalStateException("User not found"));
+        return new ArrayList<>(user.getFavoriteRecipes());
     }
 }

@@ -111,4 +111,32 @@ class UserServiceTest {
 
         assertThat(userService.isFavorite(1L, 5L)).isFalse();
     }
+
+    @Test
+    void favoriteCount_returnsTheSizeOfTheUsersFavourites() {
+        User user = new User("me", "me@example.com", "hash");
+        user.getFavoriteRecipes().add(mock(Recipe.class));
+        user.getFavoriteRecipes().add(mock(Recipe.class));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThat(userService.favoriteCount(1L)).isEqualTo(2L);
+    }
+
+    @Test
+    void favoritesOf_returnsThemAsAListCopy() {
+        User user = new User("me", "me@example.com", "hash");
+        Recipe fav = mock(Recipe.class);
+        user.getFavoriteRecipes().add(fav);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+
+        assertThat(userService.favoritesOf(1L)).containsExactly(fav);
+    }
+
+    @Test
+    void favoritesOf_whenUserMissing_throws() {
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.favoritesOf(1L))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
