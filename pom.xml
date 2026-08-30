@@ -91,6 +91,13 @@
             <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- In-memory DB for the test run only. Prod stays on MySQL
+             (application.properties, git-ignored). See src/test/resources/application.properties. -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

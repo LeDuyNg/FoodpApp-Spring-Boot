@@ -2,6 +2,7 @@ package com.leduynguyen.foodpappspringboot.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -21,7 +22,15 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/images/**", "/recipes", "/recipes/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/images/**").permitAll()
+                        // Login-only routes must be listed BEFORE the public /recipes/* rule
+                        // (first match wins) so an anonymous hit lands on /login, not a
+                        // controller that dereferences a null principal.
+                        .requestMatchers("/recipes/mine", "/recipes/new", "/recipes/*/edit").authenticated()
+                        // Public per requirements.md use case 7: browse the list and view a
+                        // single recipe. GET only — every mutating /recipes/** POST falls
+                        // through to anyRequest().authenticated() below.
+                        .requestMatchers(HttpMethod.GET, "/recipes", "/recipes/*").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
