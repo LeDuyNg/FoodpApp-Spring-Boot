@@ -63,8 +63,25 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    public void addFavourite(User user, Recipe recipe) {
-        user.getFavoriteRecipes().add(recipe);
-        userRepository.save(user);
+    @Transactional
+    public void addFavorite(Long userId, Recipe recipe) {
+        User managed = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+        managed.getFavoriteRecipes().add(recipe);
+    }
+
+    @Transactional
+    public void removeFavorite(Long userId, Long recipeId) {
+        User managed = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found"));
+        managed.getFavoriteRecipes().removeIf(r -> r.getId().equals(recipeId));
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isFavorite(Long userId, Long recipeId) {
+        return userRepository.findById(userId)
+                .map(u -> u.getFavoriteRecipes().stream()
+                        .anyMatch(r -> r.getId().equals(recipeId)))
+                .orElse(false);
     }
 }

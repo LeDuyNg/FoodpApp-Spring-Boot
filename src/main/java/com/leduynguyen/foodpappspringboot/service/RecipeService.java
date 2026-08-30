@@ -49,10 +49,7 @@ public class RecipeService {
 
     @Transactional
     public Recipe update(Long recipeId, RecipeForm form, User currentUser) {
-        Recipe recipe = recipeRepository.findById(recipeId).orElse(null);
-        if (recipe == null) {
-            throw new IllegalStateException("Recipe not found");
-        }
+        Recipe recipe = findById(recipeId);
 
         if (!recipe.getUser().getId().equals(currentUser.getId())) {
             throw new IllegalStateException("Current user is not the owner of the recipe.");
@@ -72,10 +69,7 @@ public class RecipeService {
 
     @Transactional
     public void delete(Long recipeId, User currentUser) {
-        Recipe recipe = recipeRepository.findById(recipeId).orElse(null);
-        if (recipe == null) {
-            throw new IllegalStateException("Recipe not found");
-        }
+        Recipe recipe = findById(recipeId);
 
         if (!recipe.getUser().getId().equals(currentUser.getId())) {
             throw new IllegalStateException("Current user is not the owner of the recipe.");
@@ -85,10 +79,7 @@ public class RecipeService {
 
     @Transactional
     public Comment addComment(Long recipeId, CommentForm form, User author) {
-        Recipe recipe = recipeRepository.findById(recipeId).orElse(null);
-        if (recipe == null) {
-            throw new IllegalStateException("Recipe not found");
-        }
+        Recipe recipe = findById(recipeId);
         return commentRepository.save(new Comment(author, recipe, form.getComment()));
     }
 
@@ -123,5 +114,26 @@ public class RecipeService {
         long seed = java.time.LocalDate.now().toEpochDay();
         java.util.Random random = new java.util.Random(seed);
         return all.get(random.nextInt(all.size()));
+    }
+
+    @Transactional(readOnly = true)
+    public Recipe findById(Long recipeId) {
+        return recipeRepository.findById(recipeId).orElseThrow(() -> new IllegalStateException("Recipe not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Recipe> findByOwnerId(Long ownerId) {
+        return recipeRepository.findByUserId(ownerId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Comment> commentsFor(Long recipeId) {
+        return commentRepository.findByRecipeId(recipeId);
+    }
+
+    @Transactional(readOnly = true)
+    public Integer ratingBy(Long userId, Long recipeId) {
+        return ratingRepository.findByUserIdAndRecipeId(userId, recipeId)
+                .map(Rating::getValue).orElse(null);
     }
 }
