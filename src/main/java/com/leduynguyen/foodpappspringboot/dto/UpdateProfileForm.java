@@ -3,6 +3,12 @@ package com.leduynguyen.foodpappspringboot.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * Edit-profile form. Unlike {@link RegisterForm} the password is optional - a
+ * blank value means "keep my current password". That "blank OR &gt;= 8 chars"
+ * rule can't be expressed with annotations, so it lives in
+ * {@code UserService.updateProfile} instead.
+ */
 public class UpdateProfileForm {
     @NotBlank
     private String username;

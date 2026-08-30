@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+/**
+ * Registration and the login page. The actual credential check on
+ * {@code POST /login} is handled by Spring Security's filter (see
+ * {@code SecurityConfig}), not by a method here.
+ */
 @Controller
 public class AuthController {
     private final UserService userService;

@@ -3,11 +3,9 @@
   Rendered by ProfileController.favorites()  (GET /profile/favorites).
 
   Model contract:
-    recipes : List<Recipe> or Set<Recipe> — REQUIRED (may be empty).
-              currentUser.getFavoriteRecipes(). That's a LAZY @ManyToMany,
-              so load it inside a @Transactional method (or rely on
-              spring.jpa.open-in-view, which Spring Boot leaves on by
-              default) — see §12.8 in the guide.
+    recipes : List<Recipe> — REQUIRED (may be empty). The user's favourited
+              recipes, loaded by UserService.favoritesOf(userId) inside a
+              read-only transaction (favoriteRecipes is a LAZY @ManyToMany).
 -->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Favorites')}"></head>

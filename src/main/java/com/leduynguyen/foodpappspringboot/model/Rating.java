@@ -3,6 +3,11 @@ package com.leduynguyen.foodpappspringboot.model;
 
 import jakarta.persistence.*;
 
+/**
+ * A user's 1-5 score for a recipe. The {@code (user_id, recipe_id)} unique
+ * constraint enforces one rating per user per recipe at the database level;
+ * {@code RecipeService.rate} updates the existing row rather than inserting.
+ */
 @Entity
 @Table(name = "ratings", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"user_id", "recipe_id"})

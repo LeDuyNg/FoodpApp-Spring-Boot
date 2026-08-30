@@ -8,6 +8,12 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+/**
+ * How Spring Security loads an account at login time: look the {@link User} up
+ * by email and wrap it in an {@link AppUserDetails}. A missing email becomes a
+ * {@link UsernameNotFoundException}, which the login page reports as bad
+ * credentials.
+ */
 public class AppUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 

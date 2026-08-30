@@ -6,6 +6,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+/**
+ * The landing redirect ({@code /} → {@code /home}) and the home page with its
+ * "recipe of the day". {@code /home/following} is a placeholder page - there is
+ * no follow feature behind it.
+ */
 @Controller
 public class HomeController {
 

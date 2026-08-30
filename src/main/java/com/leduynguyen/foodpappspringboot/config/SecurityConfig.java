@@ -9,10 +9,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Web security: BCrypt password hashing, form login on {@code /login} (keyed by
+ * email), logout on {@code /logout}, and the URL authorization rules below.
+ * Everything not explicitly permitted requires an authenticated user.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    /** Hashing algorithm for stored passwords; also used to verify them at login. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -28,9 +34,9 @@ public class SecurityConfig {
                         // controller that dereferences a null principal.
                         .requestMatchers("/recipes/mine", "/recipes/new", "/recipes/*/edit",
                                 "/recipes/random-from-api", "/recipes/import/**").authenticated()
-                        // Public per requirements.md use case 7: browse the list and view a
-                        // single recipe. GET only — every mutating /recipes/** POST falls
-                        // through to anyRequest().authenticated() below.
+                        // Anyone may browse the list and view a single recipe. GET only -
+                        // every mutating /recipes/** POST falls through to
+                        // anyRequest().authenticated() below.
                         .requestMatchers(HttpMethod.GET, "/recipes", "/recipes/*").permitAll()
                         .anyRequest().authenticated()
                 )

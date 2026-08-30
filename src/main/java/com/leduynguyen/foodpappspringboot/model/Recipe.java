@@ -7,6 +7,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A user-authored recipe: four required text blocks (description, ingredients,
+ * instructions are stored as plain multi-line text) plus six optional tag
+ * columns the browse filters query. Owns its {@code comments} and
+ * {@code ratings}; {@link #getAverageRating()} is computed, not stored.
+ */
 @Entity
 @Table(name = "recipes")
 public class Recipe {

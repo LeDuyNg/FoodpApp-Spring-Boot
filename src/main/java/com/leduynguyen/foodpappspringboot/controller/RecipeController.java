@@ -22,6 +22,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+/**
+ * All the recipe screens under {@code /recipes}: the public browse list and
+ * single-recipe view, plus the create / edit / delete / comment / rate / favourite
+ * actions for signed-in users. Every mutating handler follows Post/Redirect/Get
+ * and reports outcomes with flash attributes. Ownership checks live in
+ * {@code RecipeService}; this class catches the resulting
+ * {@link IllegalStateException} and turns it into a flash message.
+ */
 @Controller
 @RequestMapping("/recipes")
 public class RecipeController {

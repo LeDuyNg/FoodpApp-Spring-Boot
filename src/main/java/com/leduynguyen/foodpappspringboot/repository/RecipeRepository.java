@@ -8,13 +8,17 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
+/**
+ * CRUD for {@link Recipe}, plus "my recipes" ({@code findByUserId}) and the
+ * browse-page search below.
+ */
 public interface RecipeRepository extends JpaRepository<Recipe, Long>, JpaSpecificationExecutor<Recipe> {
     List<Recipe> findByUserId(Long userId);
 
-    // Dynamic search/filter for allrecipestags() (guide §8.2, Option A).
-    // Each ":param IS NULL OR ..." clause means "only filter on this field
-    // when the caller actually passed a value" — RecipeService.search()
-    // converts blank query params to null before calling this.
+    // One query drives the whole browse page. Each ":param IS NULL OR ..."
+    // clause is inert unless the caller passed a value, so any subset of the
+    // filters can be combined. RecipeService.search() maps blank query params
+    // to null before calling this.
     @Query("""
         SELECT r FROM Recipe r
         WHERE (:title IS NULL OR r.title LIKE CONCAT('%', :title, '%')

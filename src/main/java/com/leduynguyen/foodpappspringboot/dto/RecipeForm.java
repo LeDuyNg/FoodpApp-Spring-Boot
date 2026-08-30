@@ -3,6 +3,12 @@ package com.leduynguyen.foodpappspringboot.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Create/edit form for a recipe, shared by three flows: new recipe, edit an
+ * existing one, and "review before saving" when importing from TheMealDB. The
+ * four text fields are required; the six tag fields are free-form optional
+ * categories used by the browse-page filters.
+ */
 public class RecipeForm {
     @NotBlank @Size(min = 1, max = 80)
     private String title;

@@ -19,6 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
+/**
+ * The signed-in user's own account: profile page, edit form, favourites list,
+ * and account deletion. A successful profile edit ends in {@code redirect:/logout}
+ * because the change may alter the username/email that identifies the session.
+ */
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
@@ -26,8 +31,7 @@ public class ProfileController {
     private final UserService userService;
     private final RecipeService recipeService;
 
-
-    public ProfileController(UserService userService,  RecipeService recipeService) {
+    public ProfileController(UserService userService, RecipeService recipeService) {
         this.userService = userService;
         this.recipeService = recipeService;
     }

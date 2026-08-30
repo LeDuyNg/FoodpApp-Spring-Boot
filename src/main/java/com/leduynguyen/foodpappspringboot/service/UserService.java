@@ -12,6 +12,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Accounts and favourites. Registration hashes the password before storing it;
+ * {@link #updateProfile} only touches fields the form actually changed and
+ * rejects a username/email already taken by someone else. {@link #favoriteCount}
+ * / {@link #favoritesOf} re-load the user inside a transaction so the lazy
+ * {@code favoriteRecipes} set is initialised before it leaves this class.
+ */
 @Service
 public class UserService {
 
@@ -95,7 +102,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<Recipe>favoritesOf(Long userId) {
+    public List<Recipe> favoritesOf(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalStateException("User not found"));
         return new ArrayList<>(user.getFavoriteRecipes());
     }

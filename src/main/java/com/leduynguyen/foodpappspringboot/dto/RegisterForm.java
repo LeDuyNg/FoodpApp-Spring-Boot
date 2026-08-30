@@ -4,6 +4,11 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Sign-up form. Bean-validation constraints here are the first gate;
+ * {@code AuthController.register} then checks the username/email aren't already
+ * taken before handing off to {@code UserService.register}.
+ */
 public class RegisterForm {
     @NotBlank
     private String username;

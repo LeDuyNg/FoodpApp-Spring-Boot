@@ -8,6 +8,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Adapts our {@link User} entity to Spring Security's {@link UserDetails}. The
+ * login username is the user's email; every account has the single
+ * {@code ROLE_USER} authority. {@link #getUser()} lets controllers and
+ * templates reach the underlying entity via {@code @AuthenticationPrincipal}.
+ */
 public class AppUserDetails implements UserDetails {
     private final User user;
 

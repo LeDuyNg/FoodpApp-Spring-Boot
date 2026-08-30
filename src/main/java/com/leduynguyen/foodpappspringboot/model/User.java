@@ -5,6 +5,11 @@ import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A registered account. {@code email} is the login identifier; the password is
+ * stored only as a BCrypt hash. Owns its {@code recipes} (deleting the user
+ * cascades to them) and keeps a many-to-many set of {@code favoriteRecipes}.
+ */
 @Entity
 @Table(name="users")
 public class User {

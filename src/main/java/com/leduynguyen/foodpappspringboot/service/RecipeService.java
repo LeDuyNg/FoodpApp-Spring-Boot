@@ -16,6 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Business logic for recipes, comments and ratings. Ownership is enforced here,
+ * not in the controller: {@link #update} and {@link #delete} throw
+ * {@link IllegalStateException} if the caller isn't the recipe's author.
+ * Read methods run in read-only transactions so their lazy associations stay
+ * loadable while a view renders.
+ */
 @Service
 public class RecipeService {
 
@@ -83,6 +90,7 @@ public class RecipeService {
         return commentRepository.save(new Comment(author, recipe, form.getComment()));
     }
 
+    /** Upsert: reuse this user's existing rating row for the recipe, or start a new one. */
     @Transactional
     public Rating rate(Long recipeId, RatingForm form, User rater) {
         Recipe recipe = recipeRepository.findById(recipeId)
@@ -105,6 +113,11 @@ public class RecipeService {
         return (s == null || s.isBlank()) ? null : s;
     }
 
+    /**
+     * A recipe picked pseudo-randomly but stably for the whole calendar day
+     * (the RNG is seeded with today's date), so the home page shows the same
+     * "recipe of the day" on every visit. {@code null} when there are none yet.
+     */
     @Transactional(readOnly = true)
     public Recipe recipeOfTheDay() {
         List<Recipe> all = recipeRepository.findAll(Sort.by("id"));

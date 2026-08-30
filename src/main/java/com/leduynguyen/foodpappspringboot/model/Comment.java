@@ -5,6 +5,11 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
+/**
+ * One comment by a {@link User} on a {@link Recipe}. {@code created} is set by
+ * Hibernate on insert. Rows are removed by cascade when either the author or
+ * the recipe is deleted.
+ */
 @Entity
 @Table(name = "comments")
 public class Comment {
