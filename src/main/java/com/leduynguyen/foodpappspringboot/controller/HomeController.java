@@ -23,7 +23,7 @@ public class HomeController {
     @GetMapping("/home")
     public String home(Model model) {
         Recipe pick = recipeService.recipeOfTheDay();
-        model.addAttribute("recipe", pick);
+        model.addAttribute("recipeOfTheDay", pick);
         return "home";
     }
 
