@@ -26,7 +26,8 @@ public class SecurityConfig {
                         // Login-only routes must be listed BEFORE the public /recipes/* rule
                         // (first match wins) so an anonymous hit lands on /login, not a
                         // controller that dereferences a null principal.
-                        .requestMatchers("/recipes/mine", "/recipes/new", "/recipes/*/edit").authenticated()
+                        .requestMatchers("/recipes/mine", "/recipes/new", "/recipes/*/edit",
+                                "/recipes/random-from-api", "/recipes/import/**").authenticated()
                         // Public per requirements.md use case 7: browse the list and view a
                         // single recipe. GET only — every mutating /recipes/** POST falls
                         // through to anyRequest().authenticated() below.
