@@ -150,10 +150,14 @@
 <!-- ========================== RECIPE CARD ============================ -->
 <!-- Usage: <div th:replace="~{fragments/layout :: recipeCard(${r})}"></div> -->
 <div th:fragment="recipeCard(recipe)" class="col-12 col-md-6 col-lg-4">
-    <article class="recipe-card d-flex flex-column">
+    <article class="recipe-card d-flex flex-column position-relative">
         <div class="p-4 d-flex flex-column flex-grow-1">
             <h3 class="h5 card-title mb-2">
+                <!-- .stretched-link makes the WHOLE card clickable (Bootstrap
+                     spreads an invisible ::after over the nearest positioned
+                     ancestor — hence position-relative on the <article>). -->
                 <a th:href="@{/recipes/{id}(id=${recipe.id})}"
+                   class="stretched-link"
                    th:text="${recipe.title}">Grandma's Tomato Soup</a>
             </h3>
 

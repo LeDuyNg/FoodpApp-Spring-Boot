@@ -22,8 +22,8 @@
                 <div class="hero-eyebrow mb-2"><i class="bi bi-journal-bookmark me-1"></i> Your recipe box</div>
                 <h1 class="display-6 mb-1">Everything you've written down</h1>
                 <p class="text-muted-warm mb-0"
-                   th:text="${#lists.size(recipes)} + (${#lists.size(recipes)} == 1
-                            ? ' recipe in your collection' : ' recipes in your collection')">
+                   th:text="${#lists.size(recipes) + (#lists.size(recipes) == 1
+                            ? ' recipe in your collection' : ' recipes in your collection')}">
                     3 recipes in your collection
                 </p>
             </div>
@@ -33,16 +33,16 @@
         </div>
 
         <div class="row g-4" th:if="${not #lists.isEmpty(recipes)}">
-            <div th:each="r : ${recipes}" th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+            <th:block th:each="r : ${recipes}">
+                <div th:replace="~{fragments/layout :: recipeCard(${r})}"></div>
+            </th:block>
         </div>
 
         <div th:if="${#lists.isEmpty(recipes)}" class="empty-state">
             <i class="bi bi-journal-plus"></i>
             <h3 class="h5">Your recipe box is empty</h3>
             <p class="mb-3">Every good collection starts somewhere. What do you cook most?</p>
-            <a th:href="@{/recipes/new}" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i> Write your first recipe
-            </a>
+            <a th:href="@{/recipes/new}" class="btn btn-primary">Write your first recipe</a>
         </div>
     </div>
 </main>
